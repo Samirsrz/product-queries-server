@@ -1,24 +1,25 @@
 const express = require('express');
 const cors = require('cors');
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
 
-const corsOption = {
-  origin: [
-    'http://localhost:5173/',
-    'http://localhost:5174/',
-  ],
 
-  credentials: true,
-  optionSuccessStatus: 200, 
-}
 
 //middleware
-app.use(cors(corsOption));
+app.use(cors({
+ 
+  origin:[
+    'http://localhost:5174',
+   
+  ],
+  credentials: true
+   
+}));
 app.use(express.json());
 
 
@@ -50,13 +51,35 @@ async function run() {
 
   app.post('/jwt', async(req, res)=> {
          const user = req.body;
+         console.log(user);
          const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{
           expiresIn:'7d'
          })
          
-         res.send({token})
+         res.cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+         })
+         .send({success: true});
 
   })
+
+   
+   app.post('/logout', async(req, res)=>{
+
+     const user = req.body;
+     console.log('logging out user in jwt');
+     res
+     .clearCookie('token', {maxAge: 0, sameSite:'none', secure: true})
+     .send({success: true})
+
+   })
+
+
+
+
+
 
 
 
