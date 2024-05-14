@@ -15,16 +15,49 @@ app.use(cors({
  
   origin:[
     'http://localhost:5174',
+    'http://localhost:5173',
    
   ],
   credentials: true
    
 }));
 app.use(express.json());
+app.use(cookieParser());
+
+const logger =(req, res , next) => {
+  console.log('log - info',req.method, req.url);
+   next();
+
+}
 
 
- console.log(process.env.DB_PASS);
- console.log(process.env.DB_USER);
+const verifyToken = (req, res, next) => {
+
+     const token = req?.cookies?.token;
+      //  console.log('token in the middleware', token);
+     
+     if(!token){
+      return res.status(401).send({message: 'unauthorized access'})
+     }
+     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if(err){
+          return res.status(401).send({message: 'unauthorized access'})
+        }
+         req.user = decoded;
+         next();
+
+     })
+     
+      // next();
+}
+
+
+
+
+
+
+
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.2aarqjz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -79,12 +112,6 @@ async function run() {
 
 
 
-
-
-
-
-
-
 /////////jwt token er kaaj shesh/////////
      app.post('/addQueries', async(req,res) => {
          const newQuery = req.body;
@@ -101,9 +128,7 @@ async function run() {
           productName: { $regex: search, $options: 'i' },
         };
         const cursor = await queryCollection.find(query).toArray()
-        // const result = await cursor.toArray();
-        // console.log(cursor);
-
+      
         res.send(cursor)
      })
 
@@ -175,10 +200,17 @@ async function run() {
         res.send(result);
       })
  
-     
+  
 
-      app.get('/recommendations2/:recommendEmail', async(req, res) => {
+      app.get('/recommendations2/:recommendEmail', logger, verifyToken, async(req, res) => {
         const reqEmail = req.params.recommendEmail;
+
+         console.log('token owner info', req.user);
+ 
+        //  if(req.user.email !== req.query.recommendEmail){
+        //   return res.status(403).send({message: 'forbidden access'})
+        //  }
+
         const query = {recommendEmail : reqEmail };
         const result = await recommendCollection.find(query).toArray();
         res.send(result);
