@@ -1,12 +1,24 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 
+
+const corsOption = {
+  origin: [
+    'http://localhost:5173/',
+    'http://localhost:5174/',
+  ],
+
+  credentials: true,
+  optionSuccessStatus: 200, 
+}
+
 //middleware
-app.use(cors());
+app.use(cors(corsOption));
 app.use(express.json());
 
 
@@ -34,9 +46,23 @@ async function run() {
 
     const recommendCollection = client.db('queryDB').collection('recommendations');
     
+///////jwt token er kaaj shuru///////////////
+
+  app.post('/jwt', async(req, res)=> {
+         const user = req.body;
+         const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{
+          expiresIn:'7d'
+         })
+         
+         res.send({token})
+
+  })
 
 
 
+
+
+/////////jwt token er kaaj shesh/////////
      app.post('/addQueries', async(req,res) => {
          const newQuery = req.body;
          console.log(newQuery);
@@ -171,16 +197,7 @@ async function run() {
 
         })
 
-        // app.get('/all-services', async (req, res) =>{
-        //   const search = req.query.search;
-        //   let query = {
-        //     serviceName: { $regex: search, $options: 'i' },
-        //   };
-        //   const result = await homeService.find(query).toArray()
-        //   //  console.log(result)
-        //    res.send(result)
-        // })
-
+       
 
    
      
