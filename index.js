@@ -150,9 +150,15 @@ async function run() {
        res.send(result);
      })
 
-     app.get('/addQueries/:email', async(req, res) => {
+     app.get('/addQueries/:email',logger,verifyToken, async(req, res) => {
       const reqEmail = req.params.email;
       console.log(reqEmail);
+     console.log(req.user.email);
+   
+      if(req.user.email !== reqEmail){
+        return res.status(403).send({message: 'forbidden access'})
+       }
+
       const query = {email : reqEmail };
       const result = await queryCollection.find(query).toArray();
       res.send(result);
@@ -206,10 +212,11 @@ async function run() {
         const reqEmail = req.params.recommendEmail;
 
          console.log('token owner info', req.user);
- 
-        //  if(req.user.email !== req.query.recommendEmail){
-        //   return res.status(403).send({message: 'forbidden access'})
-        //  }
+            console.log('Paisi',reqEmail);
+   
+             if(req.user.email !== reqEmail){
+          return res.status(403).send({message: 'forbidden access'})
+         }
 
         const query = {recommendEmail : reqEmail };
         const result = await recommendCollection.find(query).toArray();
